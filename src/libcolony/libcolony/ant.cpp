@@ -1,11 +1,9 @@
 #include <libcolony/ant.hpp>
 
+namespace ant {
 
-namespace ant{
+void test_func() {
+    std::cout << "Test func" << std::endl;
+}
 
-    void test_func()
-    {
-        std::cout << "Test func" << std::endl;
-    }
-
-}  //namespace ant
+}  // namespace ant

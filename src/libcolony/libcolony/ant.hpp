@@ -1,7 +1,7 @@
 #include <iostream>
 
-namespace ant{
+namespace ant {
 
-    void test_func();
+void test_func();
 
-}  //namespace ant
+}  // namespace ant

@@ -1,9 +1,7 @@
 #include <gtest/gtest.h>
 #include <libcolony/ant.hpp>
 
-
-TEST(TestFunc, Func)
-{
+TEST(TestFunc, Func) {
     int test_number = 10;
     const int expected_number = 10;
 
