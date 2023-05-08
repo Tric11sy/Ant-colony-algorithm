@@ -1,0 +1,31 @@
+name: Build
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check codestyle
+        run: git ls-files *.{cpp,hpp} | xargs clang-format -i && git diff --exit-code
+
+      - name: Install clang-tidy
+        run: sudo apt install clang-tidy
+        
+      - name: Install Ninja
+        run: sudo apt-get install -y ninja-build
+        
+      - name: Install valgrind
+        run: sudo apt install valgrind
+
+      - name: Build application
+        run: ./run.sh
+          
+      - name: Run test
+        run: valgrind --leak-check=full ./build/debug/bin/test_lcolony
+        
+      - name: Run app
+        run: valgrind --leak-check=full ./build/debug/bin/app
