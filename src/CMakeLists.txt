@@ -1,0 +1,2 @@
+add_subdirectory(libcolony)
+add_subdirectory(app)
