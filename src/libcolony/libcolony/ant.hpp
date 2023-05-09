@@ -31,7 +31,7 @@ class Graph {
         //Добавление ребра dest - src
         list_map[src].push_back(Edge(dest, cost));
         //Добавление ребра src - dest
-        list_map[src].push_back(Edge(src, cost));
+        list_map[dest].push_back(Edge(src, cost));
     }
 
     //Печать графа
