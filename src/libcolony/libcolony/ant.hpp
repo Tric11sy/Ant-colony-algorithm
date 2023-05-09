@@ -26,17 +26,17 @@ class Graph {
     //Конструктор по умолчанию
     Graph(int new_count) : edge_count(new_count){};
 
-    //Добавление вершины в граф
+    //Добавление вершины в граф(TO DO: FIX IT!!!)
     void add_edge(int src, int dest, int cost) {
         //Создание ребра src - dest
-        Edge new_edge(dest, cost);
+        Edge* new_edge = new Edge(dest, cost);
         //Добавление ребра в карту
-        list_map[src].push_back(&new_edge);
+        list_map[src].push_back(new_edge);
 
         //Создание ребра dest - src
-        Edge new_edge2(src, cost);
+        Edge* new_edge2 = new Edge(src, cost);
         //Добавление ребра в карту
-        list_map[dest].push_back(&new_edge2);
+        list_map[dest].push_back(new_edge2);
     }
 
     //Печать графа
@@ -50,6 +50,8 @@ class Graph {
             std::cout << std::endl;
         }
     }
+
+    //Создание случайного графа
 
    private:
     //Количество вершин
