@@ -65,7 +65,7 @@ class Graph {
 //Генерация случайного графа
 Graph random_graph(const int vertices, const int desnsity) {
     //Псевдо-рандом
-    srand((unsigned) time(0));
+    srand((unsigned)time(0));
 
     //Создание графа
     Graph new_graph(vertices);
