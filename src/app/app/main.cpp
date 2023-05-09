@@ -4,11 +4,9 @@ int main() {
     // Debug
     setbuf(stdout, nullptr);
 
-    ant::Graph new_graph(10);
+    auto random_graph = ant::random_graph(10, 50);
 
-    new_graph.add_edge(1, 14, 100);
-
-    new_graph.print();
+    random_graph.print();
 
     return 0;
 }
