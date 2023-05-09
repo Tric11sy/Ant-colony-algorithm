@@ -34,7 +34,6 @@ class Graph {
         list_map[src].push_back(Edge(src, cost));
     }
 
-    // c/*
     //Печать графа
     void print() {
         //Обход карты
@@ -76,7 +75,7 @@ Graph random_graph(const int vertices, const int desnsity) {
     long double count = 0;
 
     //Генерация ребер
-    while (count < vertices) {
+    while (count < edge_count) {
         //Парамерты ребра
         int src, dest, cost;
 
