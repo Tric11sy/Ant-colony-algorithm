@@ -4,7 +4,7 @@ int main() {
     // Debug
     setbuf(stdout, nullptr);
 
-    auto random_graph = ant::random_graph(5, 100);
+    auto random_graph = ant::random_graph(10, 100);
 
     random_graph.print();
 
