@@ -64,6 +64,9 @@ class Graph {
 
 //Генерация случайного графа
 Graph random_graph(const int vertices, const int desnsity) {
+    //Псевдо-рандом
+    srand((unsigned) time(0));
+
     //Создание графа
     Graph new_graph(vertices);
 
@@ -109,38 +112,5 @@ Graph random_graph(const int vertices, const int desnsity) {
     }
     return new_graph;
 }
-
-/*
-//Генерация случайного графа
-graph* generate_random_graph(int vertices, int density)
-{
-
-    {
-        int start, end, weight;
-        start = rand() % num_nodes;
-        end = rand() % num_nodes;
-        // убедитесь, что i всегда меньше j в (i,j)
-        if (start > end)
-        {
-            int temp = start;
-            start = end;
-            end = temp;
-        }
-        // создаем пару ребер и генерируем вес для ребра
-        pair<int, int> edge(start, end);
-        weight = (rand() % 1000) + 1;
-        // если он еще не вставлен в график, вставьте его в график вместе с
-картой if (check_map.find(edge) == check_map.end() and start != end)
-        {
-            check_map[edge] = 1;
-            add_edge(my_graph, start, end, weight);
-            user_input_file << start << "\t" << end << "\t" << weight <<endl;
-            count++;
-        }
-    }
-    user_input_file.close();
-    return my_graph;
-}
-*/
 
 }  // namespace ant
