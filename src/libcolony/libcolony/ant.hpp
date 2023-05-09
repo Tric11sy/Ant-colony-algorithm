@@ -11,10 +11,6 @@ namespace ant {
 
 void test_func();
 
-/*
-    Представление графа:
-*/
-
 //Ребро
 struct Edge {
     //Конструктор инициализации
@@ -32,24 +28,23 @@ class Graph {
 
     //Добавление вершины в граф
     void add_edge(int src, int dest, int cost) {
-        //Создание ребра src - dest
-        Edge* new_edge = new Edge(dest, cost);
-        //Добавление ребра в карту
-        list_map[src].push_back(new_edge);
-
-        //Создание ребра dest - src
-        Edge* new_edge2 = new Edge(src, cost);
-        //Добавление ребра в карту
-        list_map[dest].push_back(new_edge2);
+        //Добавление ребра dest - src
+        list_map[src].push_back(Edge(dest, cost));
+        //Добавление ребра src - dest
+        list_map[src].push_back(Edge(src, cost));
     }
 
+    // c/*
     //Печать графа
     void print() {
+        //Обход карты
         for (int vertex = 0; vertex < edge_count; vertex++) {
-            std::list<Edge*> tmp_list = list_map[vertex];
-            for (auto iter = tmp_list.begin(); iter != tmp_list.end(); iter++) {
-                std::cout << "  " << (*iter)->dest_edge << ":"
-                          << (*iter)->length;
+            //Обход списка
+            for (auto list_iter = list_map[vertex].begin();
+                 list_iter != list_map[vertex].end();
+                 list_iter++) {
+                std::cout << "  " << (*list_iter).dest_edge << ":"
+                          << (*list_iter).length;
             }
             std::cout << std::endl;
         }
@@ -59,7 +54,7 @@ class Graph {
     //Количество вершин(rename)
     int edge_count;
     //Карта для каждой вешины
-    std::map<int, std::list<Edge*>> list_map;
+    std::map<int, std::list<Edge>> list_map;
 };
 
 //Генерация случайного графа
