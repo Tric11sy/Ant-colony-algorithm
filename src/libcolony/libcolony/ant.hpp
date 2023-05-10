@@ -7,6 +7,7 @@
 #include <vector>
 
 //Для использования псевдо-рандома
+#include <cmath>
 #include <cstdlib>
 #include <ctime>
 
@@ -48,7 +49,7 @@ class Graph {
     //Конструктор по умолчанию
     Graph(int new_count) : edge_count(new_count){};
 
-    //Добавление вершины в граф TO DO: пофиксить третий параметр
+    //Добавление вершины в граф(3???)
     void add_edge(int src, int dest, int cost) {
         //Добавление ребра dest - src
         list_map[src].push_back(Edge(dest, cost, 1.0));
