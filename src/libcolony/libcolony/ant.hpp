@@ -42,7 +42,7 @@ struct Edge {
     double phero;
 };
 
-//Граф(TO DO: Добавить метод изменения феромонов)
+//Граф
 class Graph {
    public:
     //Конструктор по умолчанию
@@ -226,7 +226,7 @@ class Ant {
         //Вершина
         int dest = 0;
 
-        //Выбор вершины ???
+        //Выбор вершины
         do {
             //Зацикливание перебора вершин
             if (dest == vertex_count) {
@@ -242,7 +242,7 @@ class Ant {
                                 denom;
 
                 //Рулетка
-                double roll = ((double)rand()/RAND_MAX); 
+                double roll = ((double)rand() / RAND_MAX);
 
                 //Удачный ролл
                 if (roll < chance) {
@@ -302,8 +302,7 @@ void AntColony() {
     //Выбор следущей вершины
 
     //Выбор следующей вершины для всех муравьев
-    for(int index = 0; index < graph.get_count(); index++)
-    {
+    for (int index = 0; index < graph.get_count(); index++) {
         ants.at(index).select_next(graph);
     }
 }
