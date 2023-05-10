@@ -10,6 +10,8 @@
 #include <cstdlib>
 #include <ctime>
 
+#include <assert.h>
+
 //Количество муравьев
 constexpr int ant_count = 10;
 
@@ -18,12 +20,9 @@ constexpr int ant_count = 10;
 //Скорость испарения
 constexpr double RHO = 0.5;
 
-//Обновение феромона
-double update_phero(const double old_phero) {
-    double new_phero = 1.0 + old_phero;
-
-    return new_phero;
-}
+//Параметры для определения вероятности
+constexpr double ALPHA = 1.0;
+constexpr double BETA = 5.0;
 
 namespace ant {
 
@@ -49,12 +48,12 @@ class Graph {
     //Конструктор по умолчанию
     Graph(int new_count) : edge_count(new_count){};
 
-    //Добавление вершины в граф
+    //Добавление вершины в граф TO DO: пофиксить третий параметр
     void add_edge(int src, int dest, int cost) {
         //Добавление ребра dest - src
-        list_map[src].push_back(Edge(dest, cost, 1.0 / edge_count));
+        list_map[src].push_back(Edge(dest, cost, 1.0));
         //Добавление ребра src - dest
-        list_map[dest].push_back(Edge(src, cost, 1.0 / edge_count));
+        list_map[dest].push_back(Edge(src, cost, 1.0));
     }
 
     //Печать графа
@@ -73,19 +72,36 @@ class Graph {
     }
 
     //Обновление феромонов(вершины для определения нужного ребра)
-    void change_phero(int src, int dest) {
-        std::cout << "Src:   " << src << std::endl;
-        std::cout << "Dest:   " << dest << std::endl;
-
-        // src - индекс в карте, dest - вершина в списке
-
+    void change_phero(int src, int dest, double d_phero) {
         //Поиск нужной вершины
         auto iter = std::find_if(
             list_map[src].begin(),
             list_map[src].end(),
             [&](const Edge& edge) -> bool { return edge.dest_edge == dest; });
 
-        std::cout << "  " << (*iter).dest_edge << ":" << (*iter).length;
+        //Изменение феромонов
+        (*iter).phero = (1 - RHO) * (*iter).phero + d_phero;
+    }
+
+    //Получение количества вершин
+    int get_count() const { return edge_count; }
+
+    //Получение феромонов заданной вершины
+    double get_phero(int src, int dest) {
+        auto iter = std::find_if(
+            list_map[src].begin(),
+            list_map[src].end(),
+            [&](const Edge& edge) -> bool { return edge.dest_edge == dest; });
+        return (*iter).phero;
+    }
+
+    //Получение длины заданной вершины
+    int get_length(int src, int dest) {
+        auto iter = std::find_if(
+            list_map[src].begin(),
+            list_map[src].end(),
+            [&](const Edge& edge) -> bool { return edge.dest_edge == dest; });
+        return (*iter).length;
     }
 
    private:
@@ -150,9 +166,13 @@ Graph random_graph(const int vertices, const int desnsity) {
 class Ant {
    public:
     //Конструктор инициализации
-    Ant(int new_current) {
+    Ant(int new_current, int edge_count) {
         current = new_current;
         path_length = -1;
+
+        //Инициализация вектора табу(для облегчения жизни)
+        tabu.reserve(edge_count);
+        tabu.resize(edge_count, 0);
     }
 
     //Вывод списка табу
@@ -175,7 +195,65 @@ class Ant {
     void add_path(int new_elem) { path.push_back(new_elem); }
 
     //Добавление вершины в список табу
-    void add_tabu(int new_tabu) { tabu.push_back(new_tabu); }
+    void add_tabu(int index) { tabu.at(index) = 1; }
+
+    //Подсчет вероятности
+    double ant_product(double phero, int dist) {
+        return ((pow(phero, ALPHA)) * (pow((1.0 / dist), BETA)));
+    }
+
+    //Выбор следущей вершины
+    void select_next(Graph& graph) {
+        //Получение количества вершин
+        auto vertex_count = graph.get_count();
+
+        //Делитель для формулы
+        double denom = 0.0;
+
+        //Цикл по всем вершинам
+        for (int index = 0; index < vertex_count; index++) {
+            //Прроверка на табу
+            if (tabu.at(index) == 0) {
+                denom += ant_product(
+                    graph.get_phero(current, index),
+                    graph.get_length(current, index));
+            }
+        }
+
+        //Проверка делителя
+        assert(denom != 0.0);
+
+        //Вершина
+        int dest = 0;
+
+        //Выбор вершины ???
+        do {
+            //Зацикливание перебора вершин
+            if (dest == vertex_count) {
+                dest = 0;
+            }
+
+            //Проверка на табу
+            if (tabu.at(dest) == 0) {
+                //Получение вероятности
+                double chance = ant_product(
+                                    graph.get_phero(current, dest),
+                                    graph.get_length(current, dest)) /
+                                denom;
+
+                //Рулетка
+                double roll = ((double)rand()/RAND_MAX); 
+
+                //Удачный ролл
+                if (roll < chance) {
+                    std::cout << "Winner:   " << dest << std::endl;
+                    return;
+                }
+            }
+            dest++;
+
+        } while (1);
+    }
 
    private:
     //Текущая вершина
@@ -188,19 +266,24 @@ class Ant {
     int path_length;
 };
 
+//Выбор следущего города
+
 //Муравьиный алгоритм
 void AntColony() {
     //Создание графа
-    auto graph = random_graph(30, 50);
+    auto graph = random_graph(30, 100);
 
-    graph.print();
+    // graph.print();
 
+    std::cout << graph.get_phero(1, 2) << std::endl;
+
+    // ant_count в цикле
     //Инициализация муравьев
     std::vector<Ant> ants;
-    for (int index = 0; index < ant_count; index++) {
+    for (int index = 0; index < graph.get_count(); index++) {
         //Создание муравья(по одному в вершине)???
         //Важно: добавить проверку для размера графа
-        Ant new_ant(index);
+        Ant new_ant(index, graph.get_count());
 
         //Добавление текущей вершины в путь
         new_ant.add_path(index);
@@ -211,19 +294,18 @@ void AntColony() {
         ants.push_back(new_ant);
     }
 
-    /*
-            //Вывод списка табу
-            for(auto item : ants)
-            {
-                item.print_tabu();
-            }
+    // for (auto item : ants) {
+    //     item.print_tabu();
+    // }
+    // std::cout << std::endl;
 
-            //Вывод пути
-            for(auto item : ants)
-            {
-                item.print_path();
-            }
-    */
+    //Выбор следущей вершины
+
+    //Выбор следующей вершины для всех муравьев
+    for(int index = 0; index < graph.get_count(); index++)
+    {
+        ants.at(index).select_next(graph);
+    }
 }
 
 }  // namespace ant
