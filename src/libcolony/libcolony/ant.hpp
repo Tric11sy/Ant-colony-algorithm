@@ -11,7 +11,14 @@
 #include <cstdlib>
 #include <ctime>
 
+//Для работы с файлами
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <string>
+
 #include <assert.h>
+#include <climits>
 
 //Количество муравьев
 constexpr int ant_count = 10;
@@ -152,6 +159,14 @@ Graph random_graph(const int vertices, const int desnsity) {
     //Счетчик для генерации ребер
     long double count = 0;
 
+    //Открытие файла
+    std::ofstream file;
+
+    file.open("random_graph.txt");
+
+    //Количество вершин
+    file << vertices << "\n";
+
     //Генерация ребер
     while (count < edge_count) {
         //Парамерты ребра
@@ -178,10 +193,64 @@ Graph random_graph(const int vertices, const int desnsity) {
             check_map[edge] = 1;
             //Вставка ребра в граф
             new_graph.add_edge(src, dest, cost);
+            //Запись в файл
+            file << src << " " << dest << " " << cost << "\n";
+
             //Увеличение счетчика
             count++;
         }
     }
+    //Закрытие файла
+    file.close();
+
+    return new_graph;
+}
+
+//Генерация графа по файлу
+Graph file_graph(std::string& filename) {
+    //Переменная для файла
+    std::ifstream file;
+
+    //Открытие файла
+    file.open(filename);
+
+    //Проверка открытия файла
+    if (!file.is_open()) {
+        Graph graph(0);
+        return graph;
+    }
+
+    //Строка для считывания
+    std::string buffer;
+
+    //Считывание количества вершин
+    std::getline(file, buffer);
+
+    //Количество вершин
+    int vertices = std::stoi(buffer);
+
+    //Создание графа
+    Graph new_graph(vertices);
+
+    //Считывание вершин
+    while (std::getline(file, buffer)) {
+        //Строковый поток для парсинга строки
+        std::stringstream buffer_stream;
+        buffer_stream << buffer;
+
+        //Информация о ребре графа
+        int src, dest, cost;
+
+        buffer_stream >> src;
+        buffer_stream >> dest;
+        buffer_stream >> cost;
+
+        //Вставка ребра в граф
+        new_graph.add_edge(src, dest, cost);
+    }
+
+    //Закрытие файла
+    file.close();
     return new_graph;
 }
 
@@ -260,9 +329,7 @@ class Ant {
         tabu.at(ant_index) = 1;
 
         //Сброс пути
-        path.resize(0);
-        //Заполнение пути нулями
-        path.resize(path.capacity(), 0);
+        path.resize(1);
         //Добавление текущей вершины в путь
         path.at(0) = ant_index;
 
@@ -429,16 +496,20 @@ void add_phero(std::vector<Ant>& ants, Graph& graph) {
     }
 }
 
-//Сброс всех муравьев
-void ants_reset(std::vector<Ant>& ants, int count) {
+//Сброс всех муравьев / обновление лучшего пути
+void ants_reset(std::vector<Ant>& ants, int count, int& best_path) {
     //Цикл по муравьям
     for (int index = 0; index < count; index++) {
+        //Обновление лучшего пути
+        if (ants.at(index).get_path_length() < best_path) {
+            best_path = ants.at(index).get_path_length();
+        }
         ants.at(index).reset(index);
     }
 }
 
 //Одна итерация алгоритма
-void iteration(std::vector<Ant>& ants, Graph& graph) {
+void iteration(std::vector<Ant>& ants, Graph& graph, int& best_path) {
     //Построенние путей муравьями
     ants_travelse(ants, graph);
 
@@ -448,43 +519,27 @@ void iteration(std::vector<Ant>& ants, Graph& graph) {
     //Добавление феромонов
     add_phero(ants, graph);
 
-    //Сброс значений
-    ants_reset(ants, graph.get_count());
+    //Сброс значений / обновление лучшего пути
+    ants_reset(ants, graph.get_count(), best_path);
 }
 
 //Муравьиный алгоритм
-void AntColony() {
-    //Создание графа
-    auto graph = random_graph(10, 100);
-
+void AntColony(Graph& graph, int iter_count) {
     std::vector<Ant> ants;
 
     //Инициализация муравьев
     init_ants(ants, graph.get_count());
 
-    //Итерация алгоритма
-    iteration(ants, graph);
+    //Лучший путь
+    int best_path = INT_MAX;
 
-    graph.print();
-    std::cout << std::endl;
-
-    std::cout << "                  Tabu:" << std::endl;
-    for (auto item : ants) {
-        item.print_tabu();
+    //Пробный запуск 100 итераций
+    for (int index = 0; index < iter_count; index++) {
+        //Итерация алгоритма
+        iteration(ants, graph, best_path);
     }
-    std::cout << std::endl;
 
-    std::cout << "                  Path:" << std::endl;
-    for (auto item : ants) {
-        item.print_path();
-    }
-    std::cout << std::endl;
-
-    std::cout << "                  Length:" << std::endl;
-    for (auto item : ants) {
-        std::cout << item.get_path_length() << std::endl;
-    }
-    std::cout << std::endl;
+    std::cout << "                  Best path:   " << best_path << std::endl;
 }
 
 }  // namespace ant
