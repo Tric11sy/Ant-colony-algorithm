@@ -169,7 +169,11 @@ class Ant {
     //Конструктор инициализации
     Ant(int new_current, int edge_count) {
         current = new_current;
-        path_length = -1;
+        path_length = 0;
+        path_index = 1;
+
+        //Выделение памяти под path
+        path.reserve(edge_count);
 
         //Инициализация вектора табу(для облегчения жизни)
         tabu.reserve(edge_count);
@@ -192,11 +196,32 @@ class Ant {
         std::cout << std::endl;
     }
 
+    //Получение длины пути
+    int get_path_length() { return path_length; }
+
+    //Получения количества посещенных вершин
+    int get_path_index() { return path_index; }
+
+    //Получение номера вершины
+    int get_num_path(int index) { return path.at(index); }
+
+    //Получение текущей вершины
+    int get_current() { return current; }
+
     //Добавление вершины в путь
     void add_path(int new_elem) { path.push_back(new_elem); }
 
     //Добавление вершины в список табу
     void add_tabu(int index) { tabu.at(index) = 1; }
+
+    //Изменение текущей вершины
+    void change_current(int new_current) { current = new_current; }
+
+    //Изменение длины пути
+    void change_path_length(int add) { path_length += add; }
+
+    //Изменение количества посещенных вершин
+    void change_path_index() { path_index += 1; }
 
     //Подсчет вероятности
     double ant_product(double phero, int dist) {
@@ -204,7 +229,7 @@ class Ant {
     }
 
     //Выбор следущей вершины
-    void select_next(Graph& graph) {
+    int select_next(Graph& graph) {
         //Получение количества вершин
         auto vertex_count = graph.get_count();
 
@@ -213,7 +238,7 @@ class Ant {
 
         //Цикл по всем вершинам
         for (int index = 0; index < vertex_count; index++) {
-            //Прроверка на табу
+            //Проверка на табу
             if (tabu.at(index) == 0) {
                 denom += ant_product(
                     graph.get_phero(current, index),
@@ -247,18 +272,21 @@ class Ant {
 
                 //Удачный ролл
                 if (roll < chance) {
-                    std::cout << "Winner:   " << dest << std::endl;
-                    return;
+                    // std::cout << "Winner:   " << dest << std::endl;
+                    break;
                 }
             }
             dest++;
 
         } while (1);
+        return dest;
     }
 
    private:
     //Текущая вершина
     int current;
+    //Количество посещенных вершин
+    int path_index;
     //Список табу
     std::vector<int> tabu;
     //Пусть
@@ -267,24 +295,11 @@ class Ant {
     int path_length;
 };
 
-//Выбор следущего города
-
-//Муравьиный алгоритм
-void AntColony() {
-    //Создание графа
-    auto graph = random_graph(30, 100);
-
-    // graph.print();
-
-    std::cout << graph.get_phero(1, 2) << std::endl;
-
-    // ant_count в цикле
-    //Инициализация муравьев
-    std::vector<Ant> ants;
-    for (int index = 0; index < graph.get_count(); index++) {
-        //Создание муравья(по одному в вершине)???
-        //Важно: добавить проверку для размера графа
-        Ant new_ant(index, graph.get_count());
+//Инициализация муравьев
+void init_ants(std::vector<Ant>& ants, int count) {
+    for (int index = 0; index < count; index++) {
+        //Создание муравья
+        Ant new_ant(index, count);
 
         //Добавление текущей вершины в путь
         new_ant.add_path(index);
@@ -294,18 +309,80 @@ void AntColony() {
         //Добавление в вектор муравьев
         ants.push_back(new_ant);
     }
+}
 
-    // for (auto item : ants) {
-    //     item.print_tabu();
-    // }
-    // std::cout << std::endl;
+//Построенние путей муравьями
+void ants_travelse(std::vector<Ant>& ants, Graph& graph) {
+    //Цикл по количеству муравьев(1 муравей - 1 вершина)
+    for (int ant_index = 0; ant_index < graph.get_count(); ant_index++) {
+        //Цикл по количеству вершин
+        for (int index = 0; index < graph.get_count(); index++) {
+            //Проверка на количество посещенных городов(эта проверка нужна, если
+            //количество муравьев не равно количеству вершин)
+            if (ants.at(index).get_path_index() < graph.get_count()) {
+                //Выбор следующей вершины
+                int dest = ants.at(index).select_next(graph);
 
-    //Выбор следущей вершины
+                //Добавление выбранной вершины в список табу
+                ants.at(index).add_tabu(dest);
 
-    //Выбор следующей вершины для всех муравьев
-    for (int index = 0; index < graph.get_count(); index++) {
-        ants.at(index).select_next(graph);
+                //Добаление выбранной вершины в путь
+                ants.at(index).add_path(dest);
+
+                //Изменение количества посещенных вершин
+                ants.at(index).change_path_index();
+
+                //Изменение длины пути
+                ants.at(index).change_path_length(
+                    graph.get_length(ants.at(index).get_current(), dest));
+
+                //Случай "завершения алгоритма"(посещены все вершины)
+                if (ants.at(index).get_path_index() == graph.get_count()) {
+                    //Изменение длины пути
+                    ants.at(index).change_path_length(
+                        graph.get_length(index, dest));
+                }
+                //Изменение текущей вершины
+                ants.at(index).change_current(dest);
+            }
+        }
     }
+}
+
+//Муравьиный алгоритм
+void AntColony() {
+    //Создание графа
+    auto graph = random_graph(10, 100);
+
+    graph.print();
+    std::cout << std::endl;
+
+    std::cout << graph.get_phero(1, 2) << std::endl;
+
+    //Инициализация муравьев
+    std::vector<Ant> ants;
+    //Инициализация муравьев
+    init_ants(ants, graph.get_count());
+    //Построенние путей муравьями
+    ants_travelse(ants, graph);
+
+    std::cout << "                  Tabu:" << std::endl;
+    for (auto item : ants) {
+        item.print_tabu();
+    }
+    std::cout << std::endl;
+
+    std::cout << "                  Path:" << std::endl;
+    for (auto item : ants) {
+        item.print_path();
+    }
+    std::cout << std::endl;
+
+    std::cout << "                  Length:" << std::endl;
+    for (auto item : ants) {
+        std::cout << item.get_path_length() << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 }  // namespace ant
