@@ -26,7 +26,7 @@ constexpr double ALPHA = 1.0;
 constexpr double BETA = 5.0;
 
 //Параметр отвечающий за добавление феромонов
-constexpr double QVAL = 100.0;
+constexpr double QVAL = 1.0;
 
 namespace ant {
 
@@ -245,6 +245,31 @@ class Ant {
     //Изменение количества посещенных вершин
     void change_path_index() { path_index += 1; }
 
+    //Сброс значений в изначальные
+    void reset(int ant_index) {
+        //Сброс текущей вершины
+        current = ant_index;
+        //Сброс количества посещенных вершин
+        path_index = 1;
+
+        //Сброс списка табу
+        tabu.resize(0);
+        //Заполнение списка табу нулями
+        tabu.resize(tabu.capacity(), 0);
+        //Добавление текущей вершины в список табу
+        tabu.at(ant_index) = 1;
+
+        //Сброс пути
+        path.resize(0);
+        //Заполнение пути нулями
+        path.resize(path.capacity(), 0);
+        //Добавление текущей вершины в путь
+        path.at(0) = ant_index;
+
+        //Сброс длины пути
+        path_length = 0;
+    }
+
     //Подсчет вероятности
     double ant_product(double phero, int dist) {
         return ((pow(phero, ALPHA)) * (pow((1.0 / dist), BETA)));
@@ -311,7 +336,7 @@ class Ant {
     int path_index;
     //Список табу
     std::vector<int> tabu;
-    //Пусть
+    //Путь
     std::vector<int> path;
     //Длина пути
     int path_length;
@@ -404,20 +429,16 @@ void add_phero(std::vector<Ant>& ants, Graph& graph) {
     }
 }
 
-//Муравьиный алгоритм
-void AntColony() {
-    //Создание графа
-    auto graph = random_graph(10, 100);
+//Сброс всех муравьев
+void ants_reset(std::vector<Ant>& ants, int count) {
+    //Цикл по муравьям
+    for (int index = 0; index < count; index++) {
+        ants.at(index).reset(index);
+    }
+}
 
-    graph.print();
-    std::cout << std::endl;
-
-    std::cout << graph.get_phero(1, 2) << std::endl;
-
-    //Инициализация муравьев
-    std::vector<Ant> ants;
-    //Инициализация муравьев
-    init_ants(ants, graph.get_count());
+//Одна итерация алгоритма
+void iteration(std::vector<Ant>& ants, Graph& graph) {
     //Построенние путей муравьями
     ants_travelse(ants, graph);
 
@@ -427,10 +448,26 @@ void AntColony() {
     //Добавление феромонов
     add_phero(ants, graph);
 
+    //Сброс значений
+    ants_reset(ants, graph.get_count());
+}
+
+//Муравьиный алгоритм
+void AntColony() {
+    //Создание графа
+    auto graph = random_graph(10, 100);
+
+    std::vector<Ant> ants;
+
+    //Инициализация муравьев
+    init_ants(ants, graph.get_count());
+
+    //Итерация алгоритма
+    iteration(ants, graph);
+
     graph.print();
     std::cout << std::endl;
 
-    // /*
     std::cout << "                  Tabu:" << std::endl;
     for (auto item : ants) {
         item.print_tabu();
@@ -448,7 +485,6 @@ void AntColony() {
         std::cout << item.get_path_length() << std::endl;
     }
     std::cout << std::endl;
-    // */
 }
 
 }  // namespace ant
