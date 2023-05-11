@@ -25,6 +25,9 @@ constexpr double RHO = 0.5;
 constexpr double ALPHA = 1.0;
 constexpr double BETA = 5.0;
 
+//Параметр отвечающий за добавление феромонов
+constexpr double QVAL = 100.0;
+
 namespace ant {
 
 void test_func();
@@ -52,9 +55,9 @@ class Graph {
     //Добавление вершины в граф(3???)
     void add_edge(int src, int dest, int cost) {
         //Добавление ребра dest - src
-        list_map[src].push_back(Edge(dest, cost, 1.0));
+        list_map[src].push_back(Edge(dest, cost, 1.0 / edge_count));
         //Добавление ребра src - dest
-        list_map[dest].push_back(Edge(src, cost, 1.0));
+        list_map[dest].push_back(Edge(src, cost, 1.0 / edge_count));
     }
 
     //Печать графа
@@ -66,7 +69,7 @@ class Graph {
                  list_iter != list_map[vertex].end();
                  list_iter++) {
                 std::cout << "  " << (*list_iter).dest_edge << ":"
-                          << (*list_iter).length;
+                          << (*list_iter).length << "*" << (*list_iter).phero;
             }
             std::cout << std::endl;
         }
@@ -81,7 +84,26 @@ class Graph {
             [&](const Edge& edge) -> bool { return edge.dest_edge == dest; });
 
         //Изменение феромонов
-        (*iter).phero = (1 - RHO) * (*iter).phero + d_phero;
+        (*iter).phero += +d_phero;
+    }
+
+    //Испарение феромонов
+    void phero_evaporation() {
+        //Обход карты
+        for (int vertex = 0; vertex < edge_count; vertex++) {
+            //Обход списка
+            for (auto list_iter = list_map[vertex].begin();
+                 list_iter != list_map[vertex].end();
+                 list_iter++) {
+                //Испарение
+                (*list_iter).phero *= (1.0 - RHO);
+
+                //Проверка
+                if ((*list_iter).phero < 0.0) {
+                    (*list_iter).phero *= 1.0 / edge_count;
+                }
+            }
+        }
     }
 
     //Получение количества вершин
@@ -349,6 +371,39 @@ void ants_travelse(std::vector<Ant>& ants, Graph& graph) {
     }
 }
 
+//Добавление феромонов
+void add_phero(std::vector<Ant>& ants, Graph& graph) {
+    // Src и dest для обобщения
+    int src = 0;
+    int dest = 1;
+
+    //Цикл по муравьям
+    for (auto ant : ants) {
+        //Цикл по количеству вершин
+        for (int index = 0; index < graph.get_count(); index++) {
+            //Выбор значений для src и dest
+            if (index < graph.get_count() - 1) {
+                src = index;
+                dest = index + 1;
+            } else {
+                src = index;
+                dest = 0;
+            }
+            //Изменение феромонов у ребра  src - dest
+            graph.change_phero(
+                ant.get_num_path(src),
+                ant.get_num_path(dest),
+                QVAL / ant.get_path_length());
+
+            //Изменение феромонов у ребра  dest - src
+            graph.change_phero(
+                ant.get_num_path(dest),
+                ant.get_num_path(src),
+                QVAL / ant.get_path_length());
+        }
+    }
+}
+
 //Муравьиный алгоритм
 void AntColony() {
     //Создание графа
@@ -366,6 +421,16 @@ void AntColony() {
     //Построенние путей муравьями
     ants_travelse(ants, graph);
 
+    //Испарение феромонов
+    graph.phero_evaporation();
+
+    //Добавление феромонов
+    add_phero(ants, graph);
+
+    graph.print();
+    std::cout << std::endl;
+
+    // /*
     std::cout << "                  Tabu:" << std::endl;
     for (auto item : ants) {
         item.print_tabu();
@@ -383,6 +448,7 @@ void AntColony() {
         std::cout << item.get_path_length() << std::endl;
     }
     std::cout << std::endl;
+    // */
 }
 
 }  // namespace ant
