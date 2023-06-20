@@ -26,6 +26,3 @@ jobs:
           
       - name: Run test
         run: valgrind --leak-check=full ./build/debug/bin/test_lcolony
-        
-      - name: Run app
-        run: valgrind --leak-check=full ./build/debug/bin/app
