@@ -59,7 +59,7 @@ class Graph {
     //Конструктор по умолчанию
     Graph(int new_count) : edge_count(new_count){};
 
-    //Добавление вершины в граф(3???)
+    //Добавление ребра в граф
     void add_edge(int src, int dest, int cost) {
         //Добавление ребра dest - src
         list_map[src].push_back(Edge(dest, cost, 1.0 / edge_count));
@@ -142,7 +142,10 @@ class Graph {
 };
 
 //Генерация случайного графа
-Graph random_graph(const int vertices, const int desnsity) {
+Graph random_graph(
+    const int vertices,
+    const int desnsity,
+    std::string& filename) {
     //Псевдо-рандом
     srand((unsigned)time(0));
 
@@ -162,7 +165,7 @@ Graph random_graph(const int vertices, const int desnsity) {
     //Открытие файла
     std::ofstream file;
 
-    file.open("random_graph.txt");
+    file.open(filename);
 
     //Количество вершин
     file << vertices << "\n";
@@ -381,12 +384,9 @@ class Ant {
                                     graph.get_length(current, dest)) /
                                 denom;
 
-                //Рулетка
                 double roll = ((double)rand() / RAND_MAX);
 
-                //Удачный ролл
                 if (roll < chance) {
-                    // std::cout << "Winner:   " << dest << std::endl;
                     break;
                 }
             }
@@ -524,7 +524,7 @@ void iteration(std::vector<Ant>& ants, Graph& graph, int& best_path) {
 }
 
 //Муравьиный алгоритм
-void AntColony(Graph& graph, int iter_count) {
+int AntColony(Graph& graph, int iter_count) {
     std::vector<Ant> ants;
 
     //Инициализация муравьев
@@ -533,13 +533,14 @@ void AntColony(Graph& graph, int iter_count) {
     //Лучший путь
     int best_path = INT_MAX;
 
-    //Пробный запуск 100 итераций
+    // iter_count итераций алгоритма
     for (int index = 0; index < iter_count; index++) {
         //Итерация алгоритма
         iteration(ants, graph, best_path);
     }
 
     std::cout << "                  Best path:   " << best_path << std::endl;
+    return best_path;
 }
 
 }  // namespace ant
