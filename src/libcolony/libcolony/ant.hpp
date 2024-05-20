@@ -568,10 +568,11 @@ int AntColony(Graph& graph, int iter_count) {
         iteration(ants, graph, best_path, tour);
     }
 
-    std::cout << "                  Best path:   " << best_path << std::endl;
+    std::cout << "                  Best path:   " << best_path << "   :   ";
     for (auto item : tour) {
         std::cout << item << " ";
     }
+    std::cout << std::endl;
     return best_path;
 }
 
