@@ -151,13 +151,11 @@ Graph random_graph(
     const double& min,
     const double& max,
     std::string& filename) {
-
     //Девайс псевдослучайных чисел
     std::random_device rd;
     std::mt19937 gen(rd());
     //Распределение
     std::uniform_real_distribution<> dis(min, max);
-
 
     //Создание графа
     Graph new_graph(vertices);
@@ -208,7 +206,7 @@ Graph random_graph(
             //Вставка ребра в граф
             new_graph.add_edge(src, dest, cost);
             //Запись в файл
-            file << src << " " << dest << " " << cost << "\n"; 
+            file << src << " " << dest << " " << cost << "\n";
 
             //Увеличение счетчика
             count++;
@@ -303,9 +301,7 @@ class Ant {
     }
 
     //Получение пути
-    std::vector<int> get_path(){
-        return path;
-    }
+    std::vector<int> get_path() { return path; }
 
     //Получение длины пути
     double get_path_length() { return path_length; }
@@ -458,17 +454,16 @@ void ants_travelse(std::vector<Ant>& ants, Graph& graph) {
 
                 //Добаление выбранной вершины в путь
                 ants.at(index).add_path(dest);
-                
 
                 //Изменение количества посещенных вершин
                 ants.at(index).change_path_index();
 
-
-                //std::cout << std::endl << ants.at(index).get_path_length() << "  ";
-                //Изменение длины пути
+                // std::cout << std::endl << ants.at(index).get_path_length() <<
+                // "  "; Изменение длины пути
                 ants.at(index).change_path_length(
                     graph.get_length(ants.at(index).get_current(), dest));
-                //std::cout << ants.at(index).get_path_length() << "  " << std::endl;
+                // std::cout << ants.at(index).get_path_length() << "  " <<
+                // std::endl;
 
                 //Случай "завершения алгоритма"(посещены все вершины)
                 if (ants.at(index).get_path_index() == graph.get_count()) {
@@ -517,7 +512,11 @@ void add_phero(std::vector<Ant>& ants, Graph& graph) {
 }
 
 //Сброс всех муравьев / обновление лучшего пути
-void ants_reset(std::vector<Ant>& ants, int count, double& best_path, std::vector<int>& tour) {
+void ants_reset(
+    std::vector<Ant>& ants,
+    int count,
+    double& best_path,
+    std::vector<int>& tour) {
     //Цикл по муравьям
     for (int index = 0; index < count; index++) {
         //Обновление лучшего пути
@@ -530,7 +529,11 @@ void ants_reset(std::vector<Ant>& ants, int count, double& best_path, std::vecto
 }
 
 //Одна итерация алгоритма
-void iteration(std::vector<Ant>& ants, Graph& graph, double& best_path, std::vector<int>& tour) {
+void iteration(
+    std::vector<Ant>& ants,
+    Graph& graph,
+    double& best_path,
+    std::vector<int>& tour) {
     //Построенние путей муравьями
     ants_travelse(ants, graph);
 
@@ -554,10 +557,10 @@ int AntColony(Graph& graph, int iter_count) {
     //Лучший путь
     double best_path = std::numeric_limits<double>::max();
     std::vector<int> tour;
-    
+
     //Лучшие результаты
-    //double bestTourLength = std::numeric_limits<double>::max();
-    //std::vector<int> bestTour;
+    // double bestTourLength = std::numeric_limits<double>::max();
+    // std::vector<int> bestTour;
 
     // iter_count итераций алгоритма
     for (int index = 0; index < iter_count; index++) {
@@ -566,7 +569,7 @@ int AntColony(Graph& graph, int iter_count) {
     }
 
     std::cout << "                  Best path:   " << best_path << std::endl;
-    for(auto item : tour){
+    for (auto item : tour) {
         std::cout << item << " ";
     }
     return best_path;
