@@ -55,7 +55,7 @@ TEST(TestGRAPH, Evaporation) {
 
 TEST(TestColony, Results) {
     std::string filename = "test.txt";
-    ant::random_graph(10, 100, filename);
+    ant::random_graph(10, 100, 1.0, 1000.0, filename);
     auto graph = ant::file_graph(filename);
 
     //Значения лучшего пути для прошлой итерации и текущей

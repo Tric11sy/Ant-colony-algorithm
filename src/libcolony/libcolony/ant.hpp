@@ -20,6 +20,9 @@
 #include <assert.h>
 #include <climits>
 
+#include <limits>
+#include <random>
+
 //Количество муравьев
 constexpr int ant_count = 10;
 
@@ -42,13 +45,13 @@ void test_func();
 //Ребро
 struct Edge {
     //Конструктор инициализации
-    Edge(int dest, int len, double new_phero)
+    Edge(int dest, double len, double new_phero)
         : dest_edge(dest), length(len), phero(new_phero){};
 
     //Вторая вершина
     int dest_edge;
     //Длина ребра
-    int length;
+    double length;
     //Феромоны
     double phero;
 };
@@ -60,7 +63,7 @@ class Graph {
     Graph(int new_count) : edge_count(new_count){};
 
     //Добавление ребра в граф
-    void add_edge(int src, int dest, int cost) {
+    void add_edge(int src, int dest, double cost) {
         //Добавление ребра dest - src
         list_map[src].push_back(Edge(dest, cost, 1.0 / edge_count));
         //Добавление ребра src - dest
@@ -126,7 +129,7 @@ class Graph {
     }
 
     //Получение длины заданной вершины
-    int get_length(int src, int dest) {
+    double get_length(int src, int dest) {
         auto iter = std::find_if(
             list_map[src].begin(),
             list_map[src].end(),
@@ -135,7 +138,7 @@ class Graph {
     }
 
    private:
-    //Количество вершин(rename)
+    //Количество ребер
     int edge_count;
     //Карта для каждой вешины
     std::map<int, std::list<Edge>> list_map;
@@ -145,9 +148,16 @@ class Graph {
 Graph random_graph(
     const int vertices,
     const int desnsity,
+    const double& min,
+    const double& max,
     std::string& filename) {
-    //Псевдо-рандом
-    srand((unsigned)time(0));
+
+    //Девайс псевдослучайных чисел
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    //Распределение
+    std::uniform_real_distribution<> dis(min, max);
+
 
     //Создание графа
     Graph new_graph(vertices);
@@ -173,7 +183,8 @@ Graph random_graph(
     //Генерация ребер
     while (count < edge_count) {
         //Парамерты ребра
-        int src, dest, cost;
+        int src, dest;
+        double cost;
 
         //Генерация номеров вершин для ребра
         src = rand() % vertices;
@@ -188,7 +199,7 @@ Graph random_graph(
         //Пара ребер
         std::pair<int, int> edge(src, dest);
         //Генерация веса ребра
-        cost = (rand() % 1000) + 1;
+        cost = dis(gen);
 
         //Вставка в граф
         if (check_map.find(edge) == check_map.end() and src != dest) {
@@ -197,7 +208,7 @@ Graph random_graph(
             //Вставка ребра в граф
             new_graph.add_edge(src, dest, cost);
             //Запись в файл
-            file << src << " " << dest << " " << cost << "\n";
+            file << src << " " << dest << " " << cost << "\n"; 
 
             //Увеличение счетчика
             count++;
@@ -242,7 +253,8 @@ Graph file_graph(std::string& filename) {
         buffer_stream << buffer;
 
         //Информация о ребре графа
-        int src, dest, cost;
+        int src, dest;
+        double cost;
 
         buffer_stream >> src;
         buffer_stream >> dest;
@@ -263,7 +275,7 @@ class Ant {
     //Конструктор инициализации
     Ant(int new_current, int edge_count) {
         current = new_current;
-        path_length = 0;
+        path_length = 0.0;
         path_index = 1;
 
         //Выделение памяти под path
@@ -290,8 +302,13 @@ class Ant {
         std::cout << std::endl;
     }
 
+    //Получение пути
+    std::vector<int> get_path(){
+        return path;
+    }
+
     //Получение длины пути
-    int get_path_length() { return path_length; }
+    double get_path_length() { return path_length; }
 
     //Получения количества посещенных вершин
     int get_path_index() { return path_index; }
@@ -312,7 +329,7 @@ class Ant {
     void change_current(int new_current) { current = new_current; }
 
     //Изменение длины пути
-    void change_path_length(int add) { path_length += add; }
+    void change_path_length(double add) { path_length += add; }
 
     //Изменение количества посещенных вершин
     void change_path_index() { path_index += 1; }
@@ -337,7 +354,7 @@ class Ant {
         path.at(0) = ant_index;
 
         //Сброс длины пути
-        path_length = 0;
+        path_length = 0.0;
     }
 
     //Подсчет вероятности
@@ -406,7 +423,7 @@ class Ant {
     //Путь
     std::vector<int> path;
     //Длина пути
-    int path_length;
+    double path_length;
 };
 
 //Инициализация муравьев
@@ -431,8 +448,7 @@ void ants_travelse(std::vector<Ant>& ants, Graph& graph) {
     for (int ant_index = 0; ant_index < graph.get_count(); ant_index++) {
         //Цикл по количеству вершин
         for (int index = 0; index < graph.get_count(); index++) {
-            //Проверка на количество посещенных городов(эта проверка нужна, если
-            //количество муравьев не равно количеству вершин)
+            //Проверка на количество посещенных городов
             if (ants.at(index).get_path_index() < graph.get_count()) {
                 //Выбор следующей вершины
                 int dest = ants.at(index).select_next(graph);
@@ -442,13 +458,17 @@ void ants_travelse(std::vector<Ant>& ants, Graph& graph) {
 
                 //Добаление выбранной вершины в путь
                 ants.at(index).add_path(dest);
+                
 
                 //Изменение количества посещенных вершин
                 ants.at(index).change_path_index();
 
+
+                //std::cout << std::endl << ants.at(index).get_path_length() << "  ";
                 //Изменение длины пути
                 ants.at(index).change_path_length(
                     graph.get_length(ants.at(index).get_current(), dest));
+                //std::cout << ants.at(index).get_path_length() << "  " << std::endl;
 
                 //Случай "завершения алгоритма"(посещены все вершины)
                 if (ants.at(index).get_path_index() == graph.get_count()) {
@@ -497,19 +517,20 @@ void add_phero(std::vector<Ant>& ants, Graph& graph) {
 }
 
 //Сброс всех муравьев / обновление лучшего пути
-void ants_reset(std::vector<Ant>& ants, int count, int& best_path) {
+void ants_reset(std::vector<Ant>& ants, int count, double& best_path, std::vector<int>& tour) {
     //Цикл по муравьям
     for (int index = 0; index < count; index++) {
         //Обновление лучшего пути
         if (ants.at(index).get_path_length() < best_path) {
             best_path = ants.at(index).get_path_length();
+            tour = ants.at(index).get_path();
         }
         ants.at(index).reset(index);
     }
 }
 
 //Одна итерация алгоритма
-void iteration(std::vector<Ant>& ants, Graph& graph, int& best_path) {
+void iteration(std::vector<Ant>& ants, Graph& graph, double& best_path, std::vector<int>& tour) {
     //Построенние путей муравьями
     ants_travelse(ants, graph);
 
@@ -520,7 +541,7 @@ void iteration(std::vector<Ant>& ants, Graph& graph, int& best_path) {
     add_phero(ants, graph);
 
     //Сброс значений / обновление лучшего пути
-    ants_reset(ants, graph.get_count(), best_path);
+    ants_reset(ants, graph.get_count(), best_path, tour);
 }
 
 //Муравьиный алгоритм
@@ -531,15 +552,23 @@ int AntColony(Graph& graph, int iter_count) {
     init_ants(ants, graph.get_count());
 
     //Лучший путь
-    int best_path = INT_MAX;
+    double best_path = std::numeric_limits<double>::max();
+    std::vector<int> tour;
+    
+    //Лучшие результаты
+    //double bestTourLength = std::numeric_limits<double>::max();
+    //std::vector<int> bestTour;
 
     // iter_count итераций алгоритма
     for (int index = 0; index < iter_count; index++) {
         //Итерация алгоритма
-        iteration(ants, graph, best_path);
+        iteration(ants, graph, best_path, tour);
     }
 
     std::cout << "                  Best path:   " << best_path << std::endl;
+    for(auto item : tour){
+        std::cout << item << " ";
+    }
     return best_path;
 }
 
